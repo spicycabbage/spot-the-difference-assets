@@ -101,12 +101,21 @@ const PackageSelector: React.FC<PackageSelectorProps> = ({
     }
   ];
 
+  // Live Stripe Payment Links
+  const stripePaymentLinks: { [key: string]: string } = {
+    casual: 'https://buy.stripe.com/dRmfZi4xYbo03ta77t6sw02',   // $0.99 Casual Fan
+    super: 'https://buy.stripe.com/8x214o2pQgIk4xe2Rd6sw01',     // $4.99 Super Fan
+    leader: 'https://buy.stripe.com/00w9AU5C22Ru6FmgI36sw00'     // $19.99 Fan Club Leader
+  };
+
   const handlePackageClick = (packageId: string) => {
     console.log('Package clicked:', packageId);
-    const pkg = packages.find(p => p.id === packageId);
-    if (pkg) {
-      setSelectedPackage(pkg);
-      setShowPayment(true);
+    const paymentLink = stripePaymentLinks[packageId];
+    if (paymentLink) {
+      // Open Stripe Payment Link in new tab
+      window.open(paymentLink, '_blank');
+      // Close the modal
+      onClose();
     }
   };
 
