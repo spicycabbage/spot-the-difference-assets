@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import timeBoostIcon from '../assets/icons/time-boost.png';
 import hintIcon from '../assets/icons/hint.png';
 import skipIcon from '../assets/icons/skip.png';
-import PaymentForm from './PaymentForm';
 
 type Package = {
   id: string;
@@ -34,7 +33,6 @@ const PackageSelector: React.FC<PackageSelectorProps> = ({
 }) => {
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [showPayment, setShowPayment] = useState(false);
   const [windowSize, setWindowSize] = useState({
     width: window.innerWidth,
     height: window.innerHeight
@@ -147,34 +145,7 @@ const PackageSelector: React.FC<PackageSelectorProps> = ({
     setShowConfirmation(false);
   };
 
-  // Show payment form if a package is selected
-  if (showPayment && selectedPackage) {
-    console.log('Rendering PaymentForm for package:', selectedPackage);
-    return (
-      <div 
-        className="fixed inset-0 z-50 flex items-center justify-center" 
-        style={{ 
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0
-        }}
-      >
-        <PaymentForm
-          selectedPackage={{
-            id: selectedPackage.id,
-            name: selectedPackage.name,
-            description: selectedPackage.description,
-            price: selectedPackage.price,
-            powerups: selectedPackage.powerups
-          }}
-          onSuccess={handlePaymentSuccess}
-          onCancel={handlePaymentCancel}
-        />
-      </div>
-    );
-  }
+  // PaymentForm removed - using Payment Links instead
 
   if (showConfirmation && selectedPackage) {
     return (
