@@ -1,0 +1,92 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  height: 100svh; /* Small viewport height - better for Safari */
+  overflow: hidden; /* NO SCROLLING AT ALL */
+  position: fixed; /* Prevent Safari URL bar */
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
+  -webkit-appearance: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  position: relative;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Mobile-optimized styles */
+@media (max-width: 768px) {
+  .container {
+    padding: 8px !important;
+  }
+  
+  /* Make powerup buttons smaller on mobile */
+  .powerup-button {
+    padding: 8px !important;
+    min-width: 60px;
+  }
+  
+  .powerup-button span:first-child {
+    font-size: 1.5rem !important;
+  }
+  
+  .powerup-button span:last-child {
+    font-size: 0.6rem !important;
+  }
+  
+  /* Responsive timer circles */
+  .timer-circle {
+    width: 12px !important;
+    height: 12px !important;
+  }
+  
+  /* Ensure images fit on mobile */
+  .game-image {
+    max-width: 95vw !important;
+    height: auto !important;
+  }
+  
+  /* Make marketplace more mobile-friendly */
+  .marketplace-content {
+    margin: 16px;
+    max-height: 90vh;
+  }
+}
+
+/* Touch-friendly targets */
+@media (hover: none) and (pointer: coarse) {
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Prevent zoom on double-tap for better mobile UX */
+* {
+  touch-action: manipulation;
+}
+
+/* Debug mode animations */
+@keyframes pulse {
+  0%, 100% { 
+    opacity: 1; 
+    transform: scale(1); 
+  }
+  50% { 
+    opacity: 0.7; 
+    transform: scale(1.05); 
+  }
+}

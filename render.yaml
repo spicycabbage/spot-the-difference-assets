@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: spot-difference-payment-server
+    env: node
+    buildCommand: npm install
+    startCommand: node server/payment-server.js
+    envVars:
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: NODE_ENV
+        value: production
+
