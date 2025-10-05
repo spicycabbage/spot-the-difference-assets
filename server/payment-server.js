@@ -1,6 +1,8 @@
-// Load .env file only in local development
-if (process.env.NODE_ENV !== 'production') {
+// Load .env file only if it exists (local development)
+try {
   require('dotenv').config();
+} catch (e) {
+  // dotenv not needed in production
 }
 const express = require('express');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
