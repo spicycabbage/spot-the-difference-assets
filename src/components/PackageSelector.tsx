@@ -101,27 +101,12 @@ const PackageSelector: React.FC<PackageSelectorProps> = ({
     }
   ];
 
-  // TODO: Replace these with your actual Stripe Payment Links
-  // Get these from your Stripe Dashboard > Payment Links
-  const stripePaymentLinks: { [key: string]: string } = {
-    casual: 'https://buy.stripe.com/test_9B68wQf707tgewqb2m3Ru00',  // $0.99 package
-    super: 'https://buy.stripe.com/test_eVqeVe0c66pc73Y8Ue3Ru01',    // $4.99 package  
-    leader: 'https://buy.stripe.com/test_8x23cw4sm9Bocoi0nI3Ru02'   // $19.99 package
-  };
-
   const handlePackageClick = (packageId: string) => {
     console.log('Package clicked:', packageId);
-    const paymentLink = stripePaymentLinks[packageId];
-    
-    if (paymentLink && !paymentLink.includes('YOUR_')) {
-      // Open Stripe Payment Link in new tab
-      window.open(paymentLink, '_blank');
-      
-      // Optionally close the modal
-      onClose();
-    } else {
-      // Show alert if links aren't configured yet
-      alert(`Please add your Stripe Payment Link for the ${packageId} package.\n\nGo to Stripe Dashboard > Payment Links and copy the link for this package.`);
+    const pkg = packages.find(p => p.id === packageId);
+    if (pkg) {
+      setSelectedPackage(pkg);
+      setShowPayment(true);
     }
   };
 
