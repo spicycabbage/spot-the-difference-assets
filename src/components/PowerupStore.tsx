@@ -7,8 +7,8 @@ import {
   useElements
 } from '@stripe/react-stripe-js';
 
-// Initialize Stripe (replace with your publishable key)
-const stripePromise = loadStripe('pk_test_51234567890abcdef...');
+// Initialize Stripe from environment variable
+const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY!);
 
 type PowerupPackage = {
   id: string;
