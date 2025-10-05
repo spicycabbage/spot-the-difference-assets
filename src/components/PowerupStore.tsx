@@ -56,7 +56,8 @@ const CheckoutForm: React.FC<{
 
     try {
       // Create payment intent
-      const response = await fetch('http://localhost:3001/create-payment-intent', {
+      const API_URL = process.env.REACT_APP_PAYMENT_SERVER_URL || 'http://localhost:3001';
+      const response = await fetch(`${API_URL}/create-payment-intent`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -183,7 +184,8 @@ const PowerupStore: React.FC<PowerupStoreProps> = ({ onClose, onPurchaseComplete
 
   const fetchPackages = async () => {
     try {
-      const response = await fetch('http://localhost:3001/packages');
+      const API_URL = process.env.REACT_APP_PAYMENT_SERVER_URL || 'http://localhost:3001';
+      const response = await fetch(`${API_URL}/packages`);
       const data = await response.json();
       setPackages(Object.values(data.packages));
     } catch (error) {
