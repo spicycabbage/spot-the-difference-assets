@@ -5,6 +5,7 @@ try {
   // dotenv not needed in production
 }
 const express = require('express');
+const { Pool } = require('pg');
 
 // Debug: Log first 15 characters of Stripe key
 const stripeKey = process.env.STRIPE_SECRET_KEY;
@@ -16,11 +17,55 @@ const app = express();
 
 app.use(cors());
 
-// In-memory store for pending powerups (in production, use a database)
-const pendingPowerups = new Map(); // sessionId -> powerups
+// PostgreSQL connection pool (Neon)
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
+
+// Initialize database table
+async function initDatabase() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS pending_powerups (
+        session_id VARCHAR(255) PRIMARY KEY,
+        powerups JSONB NOT NULL,
+        email VARCHAR(255),
+        product_id VARCHAR(255),
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    console.log('✅ Database initialized');
+  } catch (err) {
+    console.error('❌ Database initialization failed:', err);
+  }
+}
+
+initDatabase();
+
+// Cleanup old unclaimed powerups (older than 7 days)
+async function cleanupOldPowerups() {
+  try {
+    const result = await pool.query(
+      "DELETE FROM pending_powerups WHERE created_at < NOW() - INTERVAL '7 days'"
+    );
+    if (result.rowCount > 0) {
+      console.log(`🧹 Cleaned up ${result.rowCount} old unclaimed powerups`);
+    }
+  } catch (err) {
+    console.error('❌ Cleanup failed:', err);
+  }
+}
+
+// Run cleanup every 24 hours
+setInterval(cleanupOldPowerups, 24 * 60 * 60 * 1000);
+// Run cleanup on startup
+cleanupOldPowerups();
 
 // Webhook endpoint needs raw body - must come BEFORE express.json()
-app.post('/webhook', express.raw({type: 'application/json'}), (req, res) => {
+app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) => {
   const sig = req.headers['stripe-signature'];
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   
@@ -50,16 +95,18 @@ app.post('/webhook', express.raw({type: 'application/json'}), (req, res) => {
     const powerups = productPowerups[productId];
     
     if (powerups) {
-      // Store pending powerups by session ID
-      pendingPowerups.set(sessionId, {
-        powerups,
-        timestamp: Date.now(),
-        email: customerEmail,
-        productId
-      });
-      
-      console.log(`💰 Payment received from ${customerEmail} (session: ${sessionId})`);
-      console.log(`📦 Powerups pending: ${JSON.stringify(powerups)}`);
+      // Store pending powerups in database
+      try {
+        await pool.query(
+          'INSERT INTO pending_powerups (session_id, powerups, email, product_id) VALUES ($1, $2, $3, $4) ON CONFLICT (session_id) DO NOTHING',
+          [sessionId, JSON.stringify(powerups), customerEmail, productId]
+        );
+        
+        console.log(`💰 Payment received from ${customerEmail} (session: ${sessionId})`);
+        console.log(`📦 Powerups stored in database: ${JSON.stringify(powerups)}`);
+      } catch (err) {
+        console.error('❌ Failed to store powerups:', err);
+      }
     }
   }
   
@@ -175,21 +222,29 @@ app.post('/claim-powerups', async (req, res) => {
     return res.status(400).json({ error: 'session_id required' });
   }
   
-  const pending = pendingPowerups.get(session_id);
-  
-  if (!pending) {
-    return res.json({ powerups: null, message: 'No pending powerups for this session' });
+  try {
+    // Get pending powerups from database
+    const result = await pool.query(
+      'SELECT powerups FROM pending_powerups WHERE session_id = $1',
+      [session_id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.json({ powerups: null, message: 'No pending powerups for this session' });
+    }
+    
+    const powerups = result.rows[0].powerups;
+    
+    // Delete the claimed powerups
+    await pool.query('DELETE FROM pending_powerups WHERE session_id = $1', [session_id]);
+    
+    console.log(`✅ Granted powerups for session ${session_id}:`, powerups);
+    
+    res.json({ powerups });
+  } catch (err) {
+    console.error('❌ Failed to claim powerups:', err);
+    res.status(500).json({ error: 'Failed to claim powerups' });
   }
-  
-  // Get the powerups
-  const powerups = pending.powerups;
-  
-  // Clear pending powerups for this session
-  pendingPowerups.delete(session_id);
-  
-  console.log(`✅ Granted powerups for session ${session_id}:`, powerups);
-  
-  res.json({ powerups });
 });
 
 // Health check
