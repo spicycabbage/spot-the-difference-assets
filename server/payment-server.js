@@ -15,6 +15,58 @@ const cors = require('cors');
 const app = express();
 
 app.use(cors());
+
+// In-memory store for pending powerups (in production, use a database)
+const pendingPowerups = new Map(); // sessionId -> powerups
+
+// Webhook endpoint needs raw body - must come BEFORE express.json()
+app.post('/webhook', express.raw({type: 'application/json'}), (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  
+  let event;
+  
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+  } catch (err) {
+    console.error('Webhook signature verification failed:', err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+  
+  // Handle checkout.session.completed event
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    const customerEmail = session.customer_details?.email || 'unknown';
+    const productId = session.metadata?.product_id;
+    const sessionId = session.id;
+    
+    // Map product IDs to powerups
+    const productPowerups = {
+      'prod_TAIwiwPlIasZAM': { time: 5, hints: 2, skips: 0 },   // Casual Fan
+      'prod_TAIw8n9HgWbUR1': { time: 25, hints: 15, skips: 1 }, // Super Fan
+      'prod_TAIwEzATegHXOR': { time: 100, hints: 80, skips: 7 } // Fan Club Leader
+    };
+    
+    const powerups = productPowerups[productId];
+    
+    if (powerups) {
+      // Store pending powerups by session ID
+      pendingPowerups.set(sessionId, {
+        powerups,
+        timestamp: Date.now(),
+        email: customerEmail,
+        productId
+      });
+      
+      console.log(`💰 Payment received from ${customerEmail} (session: ${sessionId})`);
+      console.log(`📦 Powerups pending: ${JSON.stringify(powerups)}`);
+    }
+  }
+  
+  res.json({received: true});
+});
+
+// For all other routes, parse JSON
 app.use(express.json());
 
 // Powerup packages with real pricing
@@ -113,55 +165,7 @@ app.get('/packages', (req, res) => {
   res.json({ packages: POWERUP_PACKAGES });
 });
 
-// In-memory store for pending powerups (in production, use a database)
-const pendingPowerups = new Map(); // sessionId -> powerups
-
-// Webhook endpoint for Stripe payment completion
-app.post('/webhook', express.raw({type: 'application/json'}), (req, res) => {
-  const sig = req.headers['stripe-signature'];
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-  
-  let event;
-  
-  try {
-    event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
-  } catch (err) {
-    console.error('Webhook signature verification failed:', err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
-  
-  // Handle checkout.session.completed event
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
-    const customerEmail = session.customer_details?.email || 'unknown';
-    const productId = session.metadata?.product_id;
-    const sessionId = session.id;
-    
-    // Map product IDs to powerups
-    const productPowerups = {
-      'prod_TAIwiwPlIasZAM': { time: 5, hints: 2, skips: 0 },   // Casual Fan
-      'prod_TAIw8n9HgWbUR1': { time: 25, hints: 15, skips: 1 }, // Super Fan
-      'prod_TAIwEzATegHXOR': { time: 100, hints: 80, skips: 7 } // Fan Club Leader
-    };
-    
-    const powerups = productPowerups[productId];
-    
-    if (powerups) {
-      // Store pending powerups by session ID
-      pendingPowerups.set(sessionId, {
-        powerups,
-        timestamp: Date.now(),
-        email: customerEmail,
-        productId
-      });
-      
-      console.log(`💰 Payment received from ${customerEmail} (session: ${sessionId})`);
-      console.log(`📦 Powerups pending: ${JSON.stringify(powerups)}`);
-    }
-  }
-  
-  res.json({received: true});
-});
+// Duplicate webhook endpoint removed - now defined earlier in file before express.json()
 
 // Claim powerups by session ID
 app.post('/claim-powerups', async (req, res) => {
