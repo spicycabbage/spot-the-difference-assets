@@ -16,6 +16,7 @@ type PowerupState = {
 };
 
 function App() {
+  const [gameStarted, setGameStarted] = useState(false);
   const [currentLevel, setCurrentLevel] = useState(0);
   const [foundDifferences, setFoundDifferences] = useState<number[]>([]);
   const [timeLeft, setTimeLeft] = useState(60); // 1 minute
@@ -293,23 +294,9 @@ function App() {
     // console.log('Powerups purchased successfully:', purchasedPowerups);
   };
 
-  // Debug function to test audio
-  const testAudio = () => {
-    console.log('Testing audio...');
-    console.log('Audio manager status:', safeAudioManager.getStatus());
-    
-    // Test SafeAudioManager
-    safeAudioManager.playAudio('success');
-    
-    // Also test direct audio as fallback
-    if (successAudioRef.current) {
-      console.log('Testing direct audio...');
-      successAudioRef.current.play().then(() => {
-        console.log('Direct audio played successfully');
-      }).catch((error) => {
-        console.error('Direct audio failed:', error);
-      });
-    }
+  // Start game (audio initializes on user interaction)
+  const startGame = () => {
+    setGameStarted(true);
   };
 
   const level = levels[currentLevel];
@@ -427,22 +414,58 @@ function App() {
       <audio ref={wrongAudioRef} src="/wrong.mp3" preload="auto" />
       
       {/* Temporary audio test button */}
-      <button
-        onClick={testAudio}
-        style={{
+      {/* Start Game Overlay */}
+      {!gameStarted && (
+        <div style={{
           position: 'fixed',
-          top: '10px',
-          right: '10px',
-          zIndex: 9999,
-          padding: '10px',
-          backgroundColor: '#ff0000',
-          color: 'white',
-          border: 'none',
-          borderRadius: '5px'
-        }}
-      >
-        Test Audio
-      </button>
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(0, 0, 0, 0.95)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 10000,
+          gap: '20px'
+        }}>
+          <h1 style={{
+            color: 'white',
+            fontSize: isMobile ? '32px' : '48px',
+            fontWeight: 'bold',
+            marginBottom: '20px',
+            textAlign: 'center'
+          }}>
+            🔍 Spot the Difference 🔍
+          </h1>
+          <button
+            onClick={startGame}
+            style={{
+              padding: isMobile ? '16px 48px' : '20px 60px',
+              fontSize: isMobile ? '24px' : '32px',
+              fontWeight: 'bold',
+              backgroundColor: '#10b981',
+              color: 'white',
+              border: 'none',
+              borderRadius: '12px',
+              cursor: 'pointer',
+              boxShadow: '0 8px 16px rgba(16, 185, 129, 0.4)',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.05)';
+              e.currentTarget.style.backgroundColor = '#059669';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.backgroundColor = '#10b981';
+            }}
+          >
+            START GAME
+          </button>
+        </div>
+      )}
 
       {/* Switch to marker tool button - hidden for clean UI */}
       {false && process.env.NODE_ENV === 'development' && (
