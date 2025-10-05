@@ -117,21 +117,7 @@ const PackageSelector: React.FC<PackageSelectorProps> = ({
     }
   };
 
-  const handlePaymentSuccess = (powerups: any) => {
-    console.log('Payment success!', powerups);
-    if (selectedPackage) {
-      onPurchaseComplete(powerups);
-      setShowPayment(false);
-      setSelectedPackage(null);
-      onClose();
-    }
-  };
-
-  const handlePaymentCancel = () => {
-    console.log('Payment canceled');
-    setShowPayment(false);
-    setSelectedPackage(null);
-  };
+  // handlePaymentSuccess and handlePaymentCancel removed - using Payment Links instead
 
   const handleConfirmPurchase = () => {
     if (selectedPackage) {
