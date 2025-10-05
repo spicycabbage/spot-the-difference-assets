@@ -5,7 +5,12 @@ try {
   // dotenv not needed in production
 }
 const express = require('express');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+// Debug: Log first 15 characters of Stripe key
+const stripeKey = process.env.STRIPE_SECRET_KEY;
+console.log('🔑 Stripe key starts with:', stripeKey ? stripeKey.substring(0, 15) + '...' : 'MISSING!');
+
+const stripe = require('stripe')(stripeKey);
 const cors = require('cors');
 const app = express();
 
