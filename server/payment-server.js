@@ -1,4 +1,7 @@
-require('dotenv').config();
+// Load .env file only in local development
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
 const express = require('express');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const cors = require('cors');
