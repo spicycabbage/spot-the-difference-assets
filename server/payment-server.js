@@ -114,7 +114,7 @@ app.get('/packages', (req, res) => {
 });
 
 // In-memory store for pending powerups (in production, use a database)
-const pendingPowerups = new Map();
+const pendingPowerups = new Map(); // sessionId -> powerups
 
 // Webhook endpoint for Stripe payment completion
 app.post('/webhook', express.raw({type: 'application/json'}), (req, res) => {
@@ -135,6 +135,7 @@ app.post('/webhook', express.raw({type: 'application/json'}), (req, res) => {
     const session = event.data.object;
     const customerEmail = session.customer_details?.email || 'unknown';
     const productId = session.metadata?.product_id;
+    const sessionId = session.id;
     
     // Map product IDs to powerups
     const productPowerups = {
@@ -146,17 +147,15 @@ app.post('/webhook', express.raw({type: 'application/json'}), (req, res) => {
     const powerups = productPowerups[productId];
     
     if (powerups) {
-      // Store pending powerups for this customer
-      if (!pendingPowerups.has(customerEmail)) {
-        pendingPowerups.set(customerEmail, []);
-      }
-      pendingPowerups.get(customerEmail).push({
+      // Store pending powerups by session ID
+      pendingPowerups.set(sessionId, {
         powerups,
         timestamp: Date.now(),
-        sessionId: session.id
+        email: customerEmail,
+        productId
       });
       
-      console.log(`💰 Payment received from ${customerEmail} for product ${productId}`);
+      console.log(`💰 Payment received from ${customerEmail} (session: ${sessionId})`);
       console.log(`📦 Powerups pending: ${JSON.stringify(powerups)}`);
     }
   }
@@ -164,36 +163,29 @@ app.post('/webhook', express.raw({type: 'application/json'}), (req, res) => {
   res.json({received: true});
 });
 
-// Get pending powerups for a user
-app.get('/pending-powerups/:email', (req, res) => {
-  const email = req.params.email;
-  const pending = pendingPowerups.get(email) || [];
-  res.json({ pending });
-});
-
-// Claim pending powerups
+// Claim powerups by session ID
 app.post('/claim-powerups', async (req, res) => {
-  const { email } = req.body;
+  const { session_id } = req.body;
   
-  const pending = pendingPowerups.get(email) || [];
-  
-  if (pending.length === 0) {
-    return res.json({ powerups: null });
+  if (!session_id) {
+    return res.status(400).json({ error: 'session_id required' });
   }
   
-  // Sum up all pending powerups
-  const totalPowerups = pending.reduce((acc, item) => ({
-    time: acc.time + item.powerups.time,
-    hints: acc.hints + item.powerups.hints,
-    skips: acc.skips + item.powerups.skips
-  }), { time: 0, hints: 0, skips: 0 });
+  const pending = pendingPowerups.get(session_id);
   
-  // Clear pending powerups for this user
-  pendingPowerups.delete(email);
+  if (!pending) {
+    return res.json({ powerups: null, message: 'No pending powerups for this session' });
+  }
   
-  console.log(`✅ Granted powerups to ${email}:`, totalPowerups);
+  // Get the powerups
+  const powerups = pending.powerups;
   
-  res.json({ powerups: totalPowerups });
+  // Clear pending powerups for this session
+  pendingPowerups.delete(session_id);
+  
+  console.log(`✅ Granted powerups for session ${session_id}:`, powerups);
+  
+  res.json({ powerups });
 });
 
 // Health check

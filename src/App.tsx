@@ -75,13 +75,37 @@ function App() {
   // Check for payment success on page load
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const paymentStatus = urlParams.get('payment');
     const sessionId = urlParams.get('session_id');
 
+    if (sessionId) {
+      // Claim powerups from backend using session ID
+      const API_URL = process.env.REACT_APP_PAYMENT_SERVER_URL || 'http://localhost:3001';
+      fetch(`${API_URL}/claim-powerups`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId })
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.powerups) {
+            setPowerups(prev => ({
+              time: prev.time + data.powerups.time,
+              hints: prev.hints + data.powerups.hints,
+              skips: prev.skips + data.powerups.skips
+            }));
+            alert(`🎉 Payment successful! You received:\n⏰ +${data.powerups.time} Time Boosts\n💡 +${data.powerups.hints} Hints\n⏭️ +${data.powerups.skips} Skips`);
+            // Clean URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        })
+        .catch(err => console.error('Failed to claim powerups:', err));
+    }
+
+    const paymentStatus = urlParams.get('payment');
     if (paymentStatus === 'success') {
       const packageType = urlParams.get('package');
 
-      // Add powerups based on package type
+      // Legacy payment success handling (kept for backwards compatibility)
       let powerupsToAdd = { time: 0, hints: 0, skips: 0 };
 
       switch(packageType) {
