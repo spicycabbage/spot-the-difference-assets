@@ -113,13 +113,13 @@ export const levels: LevelData[] = [
 ],
   },
 
-  // Level 9 - PASTE YOUR COORDINATES HERE
+  // Level 9 - FIXED coordinate #2
   {
     imageLeft: "https://cdn.jsdelivr.net/gh/spicycabbage/spot-the-difference-assets@latest/9.png",
     imageRight: "https://cdn.jsdelivr.net/gh/spicycabbage/spot-the-difference-assets@latest/9-a.png",
     differences: [
   {"x":499,"y":466,"radius":35},
-  {"x":613,"y":637,"radiusX":35,"radiusY":69,"rotation":24},
+  {"x":643,"y":678,"radius":125},
   {"x":138,"y":590,"radiusX":35,"radiusY":55,"rotation":89},
   {"x":345,"y":222,"radiusX":35,"radiusY":65,"rotation":12},
   {"x":270,"y":229,"radiusX":35,"radiusY":45,"rotation":27}

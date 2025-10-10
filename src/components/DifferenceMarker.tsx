@@ -3,6 +3,7 @@ import { GAME_CONFIG } from "../utils/gameConfig";
 
 interface Props {
   imageUrl: string;
+  existingCoordinates?: Dot[]; // Show existing coordinates from levels.ts
 }
 
 interface Dot {
@@ -14,11 +15,12 @@ interface Dot {
   rotation?: number;   // For ellipses - rotation angle in degrees
 }
 
-const DifferenceMarker: React.FC<Props> = ({ imageUrl }) => {
+const DifferenceMarker: React.FC<Props> = ({ imageUrl, existingCoordinates }) => {
   const [dots, setDots] = useState<Dot[]>([]);
   const [mode, setMode] = useState<'circle' | 'ellipse'>('circle');
   const [ellipseSize, setEllipseSize] = useState({ radiusX: 35, radiusY: 25 });
   const [rotation, setRotation] = useState(0);
+  const [showExisting, setShowExisting] = useState(true);
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -96,6 +98,22 @@ const DifferenceMarker: React.FC<Props> = ({ imageUrl }) => {
 
   return (
     <div className="p-4">
+      {/* Show Existing Coordinates Toggle */}
+      {existingCoordinates && existingCoordinates.length > 0 && (
+        <div className="mb-4 p-3 bg-blue-100 rounded">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showExisting}
+              onChange={(e) => setShowExisting(e.target.checked)}
+            />
+            <span className="font-semibold">
+              Show Existing Coordinates ({existingCoordinates.length} in blue)
+            </span>
+          </label>
+        </div>
+      )}
+      
       {/* Mode Toggle */}
       <div className="mb-4 p-3 bg-gray-100 rounded">
         <div className="flex items-center gap-4 mb-3">
@@ -189,6 +207,19 @@ const DifferenceMarker: React.FC<Props> = ({ imageUrl }) => {
           }}
           draggable={false}
         />
+        
+        {/* Show existing coordinates from levels.ts in BLUE */}
+        {showExisting && existingCoordinates && existingCoordinates.map((dot, index) => (
+          <div
+            key={`existing-${index}`}
+            className="absolute border-3 border-blue-500 bg-blue-200 bg-opacity-40 flex items-center justify-center text-blue-900 font-bold text-xs"
+            style={displayStyle(dot, index)}
+          >
+            E{index + 1}
+          </div>
+        ))}
+        
+        {/* Show new marked coordinates in RED */}
         {dots.map((dot, index) => (
           <div
             key={index}

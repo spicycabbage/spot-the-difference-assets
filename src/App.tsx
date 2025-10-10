@@ -408,11 +408,11 @@ function App() {
           }}>
             <div>
               <h3 className="text-lg font-semibold mb-2 text-center">Original Image</h3>
-              <DifferenceMarker imageUrl={level.imageLeft} />
+              <DifferenceMarker imageUrl={level.imageLeft} existingCoordinates={level.differences} />
             </div>
             <div>
               <h3 className="text-lg font-semibold mb-2 text-center">Modified Image (Mark differences here)</h3>
-              <DifferenceMarker imageUrl={level.imageRight} />
+              <DifferenceMarker imageUrl={level.imageRight} existingCoordinates={level.differences} />
             </div>
           </div>
         </div>
