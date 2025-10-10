@@ -8,6 +8,7 @@ import PackageSelector from "./components/PackageSelector";
 import DifferenceMarker from "./components/DifferenceMarker";
 import { GAME_CONFIG } from "./utils/gameConfig";
 import { safeAudioManager } from "./utils/SafeAudioManager";
+import { preloadImagesInBackground } from "./utils/preloadImage";
 
 type PowerupState = {
   time: number;
@@ -142,6 +143,27 @@ function App() {
   useEffect(() => {
     localStorage.setItem('gamePowerups', JSON.stringify(powerups));
   }, [powerups]);
+
+  // Preload upcoming levels for faster loading
+  useEffect(() => {
+    if (!gameStarted) return;
+
+    // Preload next 3 levels in background
+    const levelsToPreload = [];
+    for (let i = 1; i <= 3; i++) {
+      const nextLevel = currentLevel + i;
+      if (nextLevel < levels.length) {
+        levelsToPreload.push(levels[nextLevel].imageLeft);
+        levelsToPreload.push(levels[nextLevel].imageRight);
+      }
+    }
+
+    if (levelsToPreload.length > 0) {
+      console.log(`Preloading ${levelsToPreload.length} images for upcoming levels...`);
+      preloadImagesInBackground(levelsToPreload);
+    }
+  }, [currentLevel, gameStarted]);
+
   const [useMarkerTool, setUseMarkerTool] = useState(false); // Disabled - coordinates complete // Toggle between marker and game
   // Load total score from localStorage
   const [totalScore, setTotalScore] = useState(() => {

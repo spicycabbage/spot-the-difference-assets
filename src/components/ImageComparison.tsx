@@ -14,10 +14,16 @@ type Props = {
 const ImageComparison: React.FC<Props> = ({ level, found, onFind, onWrongClick, timeLeft, isPaused }) => {
   const [showDebugMode, setShowDebugMode] = useState(false);
   const [revealAll, setRevealAll] = useState(false);
+  const [imagesLoaded, setImagesLoaded] = useState({ left: false, right: false });
   const [windowSize, setWindowSize] = useState({
     width: window.innerWidth,
     height: window.innerHeight
   });
+
+  // Reset image loaded state when level changes
+  useEffect(() => {
+    setImagesLoaded({ left: false, right: false });
+  }, [level]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -257,8 +263,27 @@ const ImageComparison: React.FC<Props> = ({ level, found, onFind, onWrongClick, 
           <div style={{ 
             position: 'relative',
             overflow: 'hidden',
-            flexShrink: 0
+            flexShrink: 0,
+            backgroundColor: '#1f2937'
           }}>
+            {!imagesLoaded.left && (
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: `${GAME_CONFIG.DISPLAY_WIDTH}px`,
+                height: `${GAME_CONFIG.DISPLAY_HEIGHT}px`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: '#1f2937',
+                color: '#9ca3af',
+                fontSize: '14px',
+                zIndex: 1
+              }}>
+                Loading...
+              </div>
+            )}
             <img 
               src={level.imageLeft} 
               alt="Original" 
@@ -267,9 +292,12 @@ const ImageComparison: React.FC<Props> = ({ level, found, onFind, onWrongClick, 
                 height: `${GAME_CONFIG.DISPLAY_HEIGHT}px`, 
                 objectFit: 'cover', 
                 cursor: 'crosshair',
-                display: 'block'
+                display: 'block',
+                opacity: imagesLoaded.left ? 1 : 0,
+                transition: 'opacity 0.3s ease'
               }}
-            onClick={handleImageClick}
+              onLoad={() => setImagesLoaded(prev => ({ ...prev, left: true }))}
+              onClick={handleImageClick}
           />
           
           {/* Show red circles/ellipses for found differences on left image */}
@@ -359,8 +387,27 @@ const ImageComparison: React.FC<Props> = ({ level, found, onFind, onWrongClick, 
           <div style={{ 
             position: 'relative',
             overflow: 'hidden',
-            flexShrink: 0
+            flexShrink: 0,
+            backgroundColor: '#1f2937'
           }}>
+            {!imagesLoaded.right && (
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: `${GAME_CONFIG.DISPLAY_WIDTH}px`,
+                height: `${GAME_CONFIG.DISPLAY_HEIGHT}px`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: '#1f2937',
+                color: '#9ca3af',
+                fontSize: '14px',
+                zIndex: 1
+              }}>
+                Loading...
+              </div>
+            )}
             <img
               src={level.imageRight}
               alt="Altered"
@@ -369,9 +416,12 @@ const ImageComparison: React.FC<Props> = ({ level, found, onFind, onWrongClick, 
                 height: `${GAME_CONFIG.DISPLAY_HEIGHT}px`, 
                 objectFit: 'cover', 
                 cursor: 'crosshair',
-                display: 'block'
+                display: 'block',
+                opacity: imagesLoaded.right ? 1 : 0,
+                transition: 'opacity 0.3s ease'
               }}
-            onClick={handleImageClick}
+              onLoad={() => setImagesLoaded(prev => ({ ...prev, right: true }))}
+              onClick={handleImageClick}
           />
           
           {/* Show red circles/ellipses for found differences on right image */}

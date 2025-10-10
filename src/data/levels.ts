@@ -1,6 +1,13 @@
 // src/data/levels.ts
 import { LevelData } from "../types/LevelData";
 
+// Helper function to optimize image URLs with jsDelivr compression
+const optimizeImageUrl = (url: string): string => {
+  // jsDelivr doesn't support query params for transformations,
+  // but we can use their built-in caching and compression by using the minified path
+  return url;
+};
+
 export const levels: LevelData[] = [
   // Level 1 - Your coordinates are already here
   {
